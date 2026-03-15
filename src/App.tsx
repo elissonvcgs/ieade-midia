@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Congresso from "./pages/Congresso";
 import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
