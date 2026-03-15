@@ -53,8 +53,8 @@ const Login = () => {
             transition={{ duration: 0.4 }}
             className="flex flex-col items-center text-center"
           >
-            <img src={louveappLogo} alt="LouveApp Logo" className="w-64 h-64 mb-8" />
-            <h2 className="text-2xl font-bold text-foreground mb-3">BEM-VINDO AO LOUVEAPP</h2>
+            <img src={louveappLogo} alt="IEADE Mídia Logo" className="w-64 h-64 mb-8" />
+            <h2 className="text-2xl font-bold text-foreground mb-3">BEM-VINDO AO IEADE MÍDIA</h2>
             <p className="text-lg text-foreground/80 max-w-md">{slides[currentSlide].verse}</p>
             <p className="text-sm text-muted-foreground mt-2 italic">{slides[currentSlide].reference}</p>
           </motion.div>
