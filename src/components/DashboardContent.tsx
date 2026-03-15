@@ -17,7 +17,7 @@ const DashboardContent = ({ activeSection }: Props) => {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div />
-        <h1 className="text-xl font-semibold text-primary">LouveApp</h1>
+        <h1 className="text-xl font-semibold text-primary">IEADE MÍDIA</h1>
         <div className="w-8" />
       </div>
 

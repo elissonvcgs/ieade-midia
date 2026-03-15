@@ -19,7 +19,7 @@ const Register = () => {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    window.location.href = "/dashboard";
+    window.location.href = "/congresso";
   };
 
   return (
