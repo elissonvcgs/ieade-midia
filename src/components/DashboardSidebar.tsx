@@ -1,5 +1,5 @@
 import { Home, CalendarDays, Music, MessageCircle, Church, LayoutGrid, Bell, UserX, BarChart3, Cake, Settings, ChevronRight, Menu } from "lucide-react";
-import louveappLogo from "@/assets/louveapp-logo.png";
+import ieadeLogo from "@/assets/ieade-logo.png";
 
 interface SidebarProps {
   activeSection: string;
