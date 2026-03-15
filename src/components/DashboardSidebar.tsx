@@ -1,5 +1,5 @@
 import { Home, CalendarDays, Music, MessageCircle, Church, LayoutGrid, Bell, UserX, BarChart3, Cake, Settings, ChevronRight, Menu } from "lucide-react";
-import louveappLogo from "@/assets/louveapp-logo.png";
+import ieadeLogo from "@/assets/ieade-logo.png";
 
 interface SidebarProps {
   activeSection: string;
@@ -79,7 +79,7 @@ const DashboardSidebar = ({ activeSection, onSectionChange, isOpen, onToggle }: 
                   }`}
                 >
                   {isActive && item.id === "inicio" ? (
-                    <img src={louveappLogo} alt="" className="w-5 h-5" />
+                    <img src={ieadeLogo} alt="" className="w-5 h-5 rounded-full" />
                   ) : (
                     <Icon className="w-5 h-5" />
                   )}

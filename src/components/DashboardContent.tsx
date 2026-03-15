@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Check, ThumbsUp, Music, MessageSquare, ArrowRight, Cake } from "lucide-react";
+import EscalasContent from "./EscalasContent";
 
 const sectionReveal = {
   initial: { opacity: 0, y: 12 },
@@ -22,7 +23,7 @@ const DashboardContent = ({ activeSection }: Props) => {
       </div>
 
       {activeSection === "inicio" && <HomeContent />}
-      {activeSection === "escalas" && <PlaceholderSection title="Escalas" description="Gerencie as escalas do ministério" />}
+      {activeSection === "escalas" && <EscalasContent />}
       {activeSection === "repertorio" && <PlaceholderSection title="Repertório" description="Músicas e cifras do ministério" />}
       {activeSection === "mensagens" && <PlaceholderSection title="Mensagens" description="Comunicação entre membros" />}
       {activeSection === "ministerio" && <PlaceholderSection title="Ministério" description="Configurações do ministério" />}

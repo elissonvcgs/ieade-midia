@@ -61,12 +61,6 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
           muted: "hsl(var(--sidebar-muted))",
         },
-        louveapp: {
-          blue: "hsl(var(--louveapp-blue))",
-          "blue-light": "hsl(var(--louveapp-blue-light))",
-          gold: "hsl(var(--louveapp-gold))",
-          navy: "hsl(var(--louveapp-navy))",
-        },
       },
       borderRadius: {
         lg: "var(--radius)",
