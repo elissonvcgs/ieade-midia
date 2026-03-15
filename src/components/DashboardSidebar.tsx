@@ -79,7 +79,7 @@ const DashboardSidebar = ({ activeSection, onSectionChange, isOpen, onToggle }: 
                   }`}
                 >
                   {isActive && item.id === "inicio" ? (
-                    <img src={louveappLogo} alt="" className="w-5 h-5" />
+                    <img src={ieadeLogo} alt="" className="w-5 h-5 rounded-full" />
                   ) : (
                     <Icon className="w-5 h-5" />
                   )}
