@@ -1,28 +1,18 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import ieadeLogo from "@/assets/ieade-logo.png";
 
 const slides = [
-  {
-    verse: "Grande é o Senhor e digno de ser louvado.",
-    reference: "Salmos 145:3",
-  },
-  {
-    verse: "Cantai ao Senhor um cântico novo, cantai ao Senhor, todas as terras.",
-    reference: "Salmos 96:1",
-  },
-  {
-    verse: "Louvai ao Senhor porque ele é bom; porque a sua misericórdia dura para sempre.",
-    reference: "Salmos 136:1",
-  },
-  {
-    verse: "Tudo o que tem fôlego louve ao Senhor.",
-    reference: "Salmos 150:6",
-  },
+  { verse: "Grande é o Senhor e digno de ser louvado.", reference: "Salmos 145:3" },
+  { verse: "Cantai ao Senhor um cântico novo, cantai ao Senhor, todas as terras.", reference: "Salmos 96:1" },
+  { verse: "Louvai ao Senhor porque ele é bom; porque a sua misericórdia dura para sempre.", reference: "Salmos 136:1" },
+  { verse: "Tudo o que tem fôlego louve ao Senhor.", reference: "Salmos 150:6" },
 ];
 
 const Login = () => {
@@ -30,13 +20,23 @@ const Login = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const nextSlide = () => setCurrentSlide((p) => (p + 1) % slides.length);
   const prevSlide = () => setCurrentSlide((p) => (p - 1 + slides.length) % slides.length);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    window.location.href = "/dashboard";
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setLoading(false);
+    if (error) {
+      toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
+    } else {
+      navigate("/congresso");
+    }
   };
 
   return (
@@ -58,21 +58,13 @@ const Login = () => {
             <p className="text-sm text-primary-foreground/60 mt-2 italic">{slides[currentSlide].reference}</p>
           </motion.div>
         </AnimatePresence>
-
-        {/* Carousel Controls */}
         <div className="absolute bottom-12 flex items-center gap-3">
           <button onClick={prevSlide} className="p-1 text-primary-foreground/60 hover:text-primary-foreground transition-colors">
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div className="flex gap-2">
             {slides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentSlide(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === currentSlide ? "w-6 bg-primary-foreground" : "w-2 bg-primary-foreground/40"
-                }`}
-              />
+              <button key={i} onClick={() => setCurrentSlide(i)} className={`h-2 rounded-full transition-all duration-300 ${i === currentSlide ? "w-6 bg-primary-foreground" : "w-2 bg-primary-foreground/40"}`} />
             ))}
           </div>
           <button onClick={nextSlide} className="p-1 text-primary-foreground/60 hover:text-primary-foreground transition-colors">
@@ -83,12 +75,7 @@ const Login = () => {
 
       {/* Right Panel - Login Form */}
       <div className="w-full lg:w-1/2 flex flex-col items-center justify-center p-8 bg-card">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
           <div className="flex flex-col items-center mb-8">
             <img src={ieadeLogo} alt="IEADE Mídia" className="w-16 h-16 mb-3 rounded-full" />
             <h1 className="text-2xl font-semibold text-foreground">IEADE MÍDIA</h1>
@@ -97,63 +84,23 @@ const Login = () => {
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="email"
-                placeholder="E-mail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-11 h-12 rounded-lg border-border bg-card"
-              />
+              <Input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-11 h-12 rounded-lg border-border bg-card" required />
             </div>
-
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-11 pr-11 h-12 rounded-lg border-border bg-card"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
+              <Input type={showPassword ? "text" : "password"} placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-11 pr-11 h-12 rounded-lg border-border bg-card" required />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-
-            <div className="flex justify-end">
-              <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                Esqueceu a senha?
-              </Link>
-            </div>
-
-            <Button type="submit" className="w-full h-12 text-base font-semibold rounded-lg">
-              Entrar
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-12 text-base rounded-lg border-border"
-            >
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-              </svg>
-              Entrar com Google
+            <Button type="submit" className="w-full h-12 text-base font-semibold rounded-lg" disabled={loading}>
+              {loading ? "Entrando..." : "Entrar"}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Não possui login?{" "}
-            <Link to="/register" className="text-primary font-semibold hover:underline">
-              Cadastre-se
-            </Link>
+            <Link to="/register" className="text-primary font-semibold hover:underline">Cadastre-se</Link>
           </p>
         </motion.div>
       </div>
