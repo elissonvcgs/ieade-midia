@@ -14,7 +14,294 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      avisos: {
+        Row: {
+          congresso_id: string
+          conteudo: string | null
+          created_at: string
+          created_by: string
+          destaque: boolean
+          id: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          congresso_id: string
+          conteudo?: string | null
+          created_at?: string
+          created_by: string
+          destaque?: boolean
+          id?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          congresso_id?: string
+          conteudo?: string | null
+          created_at?: string
+          created_by?: string
+          destaque?: boolean
+          id?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avisos_congresso_id_fkey"
+            columns: ["congresso_id"]
+            isOneToOne: false
+            referencedRelation: "congressos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      congresso_members: {
+        Row: {
+          congresso_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          congresso_id: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          congresso_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "congresso_members_congresso_id_fkey"
+            columns: ["congresso_id"]
+            isOneToOne: false
+            referencedRelation: "congressos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      congressos: {
+        Row: {
+          codigo: string
+          created_at: string
+          created_by: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          created_by: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          created_by?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      escala_musicas: {
+        Row: {
+          artista: string | null
+          created_at: string
+          escala_id: string
+          id: string
+          nome: string
+          ordem: number
+          tom: string | null
+        }
+        Insert: {
+          artista?: string | null
+          created_at?: string
+          escala_id: string
+          id?: string
+          nome: string
+          ordem?: number
+          tom?: string | null
+        }
+        Update: {
+          artista?: string | null
+          created_at?: string
+          escala_id?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          tom?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escala_musicas_escala_id_fkey"
+            columns: ["escala_id"]
+            isOneToOne: false
+            referencedRelation: "escalas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      escala_participantes: {
+        Row: {
+          confirmado: boolean | null
+          created_at: string
+          escala_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          confirmado?: boolean | null
+          created_at?: string
+          escala_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          confirmado?: boolean | null
+          created_at?: string
+          escala_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escala_participantes_escala_id_fkey"
+            columns: ["escala_id"]
+            isOneToOne: false
+            referencedRelation: "escalas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      escalas: {
+        Row: {
+          confirmacao: boolean
+          congresso_id: string
+          created_at: string
+          created_by: string
+          data: string | null
+          hora: string | null
+          id: string
+          observacoes: string | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          confirmacao?: boolean
+          congresso_id: string
+          created_at?: string
+          created_by: string
+          data?: string | null
+          hora?: string | null
+          id?: string
+          observacoes?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          confirmacao?: boolean
+          congresso_id?: string
+          created_at?: string
+          created_by?: string
+          data?: string | null
+          hora?: string | null
+          id?: string
+          observacoes?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalas_congresso_id_fkey"
+            columns: ["congresso_id"]
+            isOneToOne: false
+            referencedRelation: "congressos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mensagens: {
+        Row: {
+          congresso_id: string
+          conteudo: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          congresso_id: string
+          conteudo: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          congresso_id?: string
+          conteudo?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensagens_congresso_id_fkey"
+            columns: ["congresso_id"]
+            isOneToOne: false
+            referencedRelation: "congressos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          birthday: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          birthday?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          birthday?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
