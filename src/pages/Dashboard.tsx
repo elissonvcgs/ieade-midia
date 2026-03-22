@@ -1,11 +1,24 @@
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import DashboardContent from "@/components/DashboardContent";
+import { useCongresso } from "@/hooks/useCongresso";
 
 const Dashboard = () => {
   const [activeSection, setActiveSection] = useState("inicio");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { congresso, loading } = useCongresso();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
+
+  if (!congresso) return <Navigate to="/congresso" replace />;
 
   return (
     <div className="flex min-h-screen bg-background">

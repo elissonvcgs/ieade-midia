@@ -33,7 +33,7 @@ const DashboardContent = ({ activeSection }: Props) => {
       {activeSection === "indisponibilidades" && <PlaceholderSection title="Indisponibilidades" description="Marque suas indisponibilidades" />}
       {activeSection === "planejamento" && <PlaceholderSection title="Planejamento de Funções" description="Planeje as funções do ministério" />}
       {activeSection === "aniversariantes" && <PlaceholderSection title="Aniversariantes" description="Aniversariantes do mês" />}
-      {activeSection === "configuracoes" && <PlaceholderSection title="Configurações" description="Configurações da conta" />}
+      {activeSection === "configuracoes" && <ConfiguracoesContent />}
     </div>
   );
 };
