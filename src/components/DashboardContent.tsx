@@ -28,7 +28,7 @@ const DashboardContent = ({ activeSection }: Props) => {
       {activeSection === "inicio" && <HomeContent />}
       {activeSection === "escalas" && <EscalasContent />}
       {activeSection === "repertorio" && <RepertorioContent />}
-      {activeSection === "mensagens" && <PlaceholderSection title="Mensagens" description="Comunicação entre membros" />}
+      {activeSection === "mensagens" && <MensagensContent />}
       {activeSection === "ministerio" && <PlaceholderSection title="Ministério" description="Configurações do ministério" />}
       {activeSection === "visao-geral" && <PlaceholderSection title="Visão Geral" description="Resumo geral das atividades" />}
       {activeSection === "avisos" && <PlaceholderSection title="Avisos" description="Avisos e comunicados" />}
