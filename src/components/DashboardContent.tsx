@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Check, ThumbsUp, Music, MessageSquare, ArrowRight, Cake } from "lucide-react";
 import EscalasContent from "./EscalasContent";
+import ConfiguracoesContent from "./ConfiguracoesContent";
 
 const sectionReveal = {
   initial: { opacity: 0, y: 12 },
