@@ -302,6 +302,74 @@ export type Database = {
         }
         Relationships: []
       }
+      repertorio: {
+        Row: {
+          album: string | null
+          artista: string | null
+          audio_url: string | null
+          bpm: string | null
+          cifra: string | null
+          classificacao: string | null
+          congresso_id: string
+          created_at: string
+          created_by: string
+          duracao: string | null
+          id: string
+          letra: string | null
+          letra_url: string | null
+          nome: string
+          tom: string | null
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          album?: string | null
+          artista?: string | null
+          audio_url?: string | null
+          bpm?: string | null
+          cifra?: string | null
+          classificacao?: string | null
+          congresso_id: string
+          created_at?: string
+          created_by: string
+          duracao?: string | null
+          id?: string
+          letra?: string | null
+          letra_url?: string | null
+          nome: string
+          tom?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          album?: string | null
+          artista?: string | null
+          audio_url?: string | null
+          bpm?: string | null
+          cifra?: string | null
+          classificacao?: string | null
+          congresso_id?: string
+          created_at?: string
+          created_by?: string
+          duracao?: string | null
+          id?: string
+          letra?: string | null
+          letra_url?: string | null
+          nome?: string
+          tom?: string | null
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repertorio_congresso_id_fkey"
+            columns: ["congresso_id"]
+            isOneToOne: false
+            referencedRelation: "congressos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
