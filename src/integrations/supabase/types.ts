@@ -55,6 +55,102 @@ export type Database = {
           },
         ]
       }
+      chat_messages: {
+        Row: {
+          conteudo: string
+          created_at: string
+          id: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          conteudo: string
+          created_at?: string
+          id?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string
+          id?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_room_members: {
+        Row: {
+          created_at: string
+          id: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_room_members_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_rooms: {
+        Row: {
+          congresso_id: string
+          created_at: string
+          created_by: string
+          id: string
+          nome: string | null
+          tipo: string
+        }
+        Insert: {
+          congresso_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          nome?: string | null
+          tipo?: string
+        }
+        Update: {
+          congresso_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          nome?: string | null
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_rooms_congresso_id_fkey"
+            columns: ["congresso_id"]
+            isOneToOne: false
+            referencedRelation: "congressos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       congresso_members: {
         Row: {
           congresso_id: string

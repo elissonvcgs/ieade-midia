@@ -3,6 +3,7 @@ import { Check, ThumbsUp, Music, MessageSquare, ArrowRight, Cake } from "lucide-
 import EscalasContent from "./EscalasContent";
 import ConfiguracoesContent from "./ConfiguracoesContent";
 import RepertorioContent from "./RepertorioContent";
+import MensagensContent from "./MensagensContent";
 
 const sectionReveal = {
   initial: { opacity: 0, y: 12 },
@@ -27,7 +28,7 @@ const DashboardContent = ({ activeSection }: Props) => {
       {activeSection === "inicio" && <HomeContent />}
       {activeSection === "escalas" && <EscalasContent />}
       {activeSection === "repertorio" && <RepertorioContent />}
-      {activeSection === "mensagens" && <PlaceholderSection title="Mensagens" description="Comunicação entre membros" />}
+      {activeSection === "mensagens" && <MensagensContent />}
       {activeSection === "ministerio" && <PlaceholderSection title="Ministério" description="Configurações do ministério" />}
       {activeSection === "visao-geral" && <PlaceholderSection title="Visão Geral" description="Resumo geral das atividades" />}
       {activeSection === "avisos" && <PlaceholderSection title="Avisos" description="Avisos e comunicados" />}
