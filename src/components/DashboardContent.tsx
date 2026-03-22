@@ -3,6 +3,7 @@ import { Check, ThumbsUp, Music, MessageSquare, ArrowRight, Cake } from "lucide-
 import EscalasContent from "./EscalasContent";
 import ConfiguracoesContent from "./ConfiguracoesContent";
 import RepertorioContent from "./RepertorioContent";
+import MensagensContent from "./MensagensContent";
 
 const sectionReveal = {
   initial: { opacity: 0, y: 12 },
