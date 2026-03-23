@@ -4,6 +4,7 @@ import EscalasContent from "./EscalasContent";
 import ConfiguracoesContent from "./ConfiguracoesContent";
 import RepertorioContent from "./RepertorioContent";
 import MensagensContent from "./MensagensContent";
+import MinisterioContent from "./MinisterioContent";
 
 const sectionReveal = {
   initial: { opacity: 0, y: 12 },
