@@ -333,6 +333,74 @@ export type Database = {
           },
         ]
       }
+      funcoes: {
+        Row: {
+          congresso_id: string
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          congresso_id: string
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          congresso_id?: string
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funcoes_congresso_id_fkey"
+            columns: ["congresso_id"]
+            isOneToOne: false
+            referencedRelation: "congressos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      membro_funcoes: {
+        Row: {
+          congresso_id: string
+          created_at: string
+          funcao_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          congresso_id: string
+          created_at?: string
+          funcao_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          congresso_id?: string
+          created_at?: string
+          funcao_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membro_funcoes_congresso_id_fkey"
+            columns: ["congresso_id"]
+            isOneToOne: false
+            referencedRelation: "congressos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "membro_funcoes_funcao_id_fkey"
+            columns: ["funcao_id"]
+            isOneToOne: false
+            referencedRelation: "funcoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mensagens: {
         Row: {
           congresso_id: string
