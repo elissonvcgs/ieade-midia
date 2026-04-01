@@ -283,6 +283,44 @@ export type Database = {
           },
         ]
       }
+      escala_roteiro: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          escala_id: string
+          hora: string | null
+          id: string
+          ordem: number
+          titulo: string
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          escala_id: string
+          hora?: string | null
+          id?: string
+          ordem?: number
+          titulo: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          escala_id?: string
+          hora?: string | null
+          id?: string
+          ordem?: number
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escala_roteiro_escala_id_fkey"
+            columns: ["escala_id"]
+            isOneToOne: false
+            referencedRelation: "escalas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       escalas: {
         Row: {
           confirmacao: boolean
@@ -527,6 +565,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "repertorio_congresso_id_fkey"
+            columns: ["congresso_id"]
+            isOneToOne: false
+            referencedRelation: "congressos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      roteiro_modelos: {
+        Row: {
+          congresso_id: string
+          created_at: string
+          created_by: string
+          id: string
+          itens: Json
+          nome: string
+        }
+        Insert: {
+          congresso_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          itens?: Json
+          nome: string
+        }
+        Update: {
+          congresso_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          itens?: Json
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roteiro_modelos_congresso_id_fkey"
             columns: ["congresso_id"]
             isOneToOne: false
             referencedRelation: "congressos"
