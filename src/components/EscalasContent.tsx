@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, X, Filter, List, Info, Users, Music, Clock, ChevronRight, Shuffle, CalendarDays, ThumbsUp } from "lucide-react";
+import { Plus, X, Filter, List, Info, Users, Music, Clock, ChevronRight, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -8,6 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCongresso } from "@/hooks/useCongresso";
 import { useToast } from "@/hooks/use-toast";
+import EscalaParticipantesTab from "@/components/escalas/EscalaParticipantesTab";
+import EscalaMusicasTab from "@/components/escalas/EscalaMusicasTab";
+import EscalaRoteiroTab from "@/components/escalas/EscalaRoteiroTab";
 
 type EscalaTab = "proximas" | "anteriores";
 type NovaEscalaTab = "detalhes" | "participantes" | "musicas" | "roteiro";
@@ -23,6 +26,22 @@ interface Escala {
   created_by: string;
 }
 
+interface MusicaEscala {
+  id?: string;
+  nome: string;
+  artista: string | null;
+  tom: string | null;
+  ordem: number;
+}
+
+interface RoteiroItem {
+  id?: string;
+  titulo: string;
+  descricao: string;
+  hora: string;
+  ordem: number;
+}
+
 const EscalasContent = () => {
   const [tab, setTab] = useState<EscalaTab>("proximas");
   const [showNovaEscala, setShowNovaEscala] = useState(false);
@@ -30,6 +49,9 @@ const EscalasContent = () => {
   const [escalas, setEscalas] = useState<Escala[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ titulo: "", data: "", hora: "", observacoes: "", confirmacao: true });
+  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
+  const [musicas, setMusicas] = useState<MusicaEscala[]>([]);
+  const [roteiro, setRoteiro] = useState<RoteiroItem[]>([]);
   const { user } = useAuth();
   const { congresso } = useCongresso();
   const { toast } = useToast();
@@ -41,18 +63,26 @@ const EscalasContent = () => {
       .select("*")
       .eq("congresso_id", congresso.id)
       .order("data", { ascending: true });
-
     if (!error && data) setEscalas(data);
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchEscalas();
-  }, [congresso]);
+  useEffect(() => { fetchEscalas(); }, [congresso]);
+
+  const resetForm = () => {
+    setForm({ titulo: "", data: "", hora: "", observacoes: "", confirmacao: true });
+    setSelectedParticipants([]);
+    setMusicas([]);
+    setRoteiro([]);
+    setShowNovaEscala(false);
+    setNovaTab("detalhes");
+  };
 
   const handleSalvar = async () => {
     if (!form.titulo.trim() || !user || !congresso) return;
-    const { error } = await supabase.from("escalas").insert({
+
+    // 1. Create escala
+    const { data: escalaData, error } = await supabase.from("escalas").insert({
       congresso_id: congresso.id,
       titulo: form.titulo,
       data: form.data || null,
@@ -60,17 +90,38 @@ const EscalasContent = () => {
       observacoes: form.observacoes || null,
       confirmacao: form.confirmacao,
       created_by: user.id,
-    });
+    }).select().single();
 
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    if (error || !escalaData) {
+      toast({ title: "Erro", description: error?.message, variant: "destructive" });
       return;
     }
 
+    const escalaId = escalaData.id;
+
+    // 2. Save participants
+    if (selectedParticipants.length > 0) {
+      await supabase.from("escala_participantes").insert(
+        selectedParticipants.map((uid) => ({ escala_id: escalaId, user_id: uid }))
+      );
+    }
+
+    // 3. Save musicas
+    if (musicas.length > 0) {
+      await supabase.from("escala_musicas").insert(
+        musicas.map((m, i) => ({ escala_id: escalaId, nome: m.nome, artista: m.artista, tom: m.tom, ordem: i }))
+      );
+    }
+
+    // 4. Save roteiro
+    if (roteiro.length > 0) {
+      await supabase.from("escala_roteiro").insert(
+        roteiro.map((r, i) => ({ escala_id: escalaId, titulo: r.titulo, descricao: r.descricao || null, hora: r.hora || null, ordem: i }))
+      );
+    }
+
     toast({ title: "Escala criada!" });
-    setForm({ titulo: "", data: "", hora: "", observacoes: "", confirmacao: true });
-    setShowNovaEscala(false);
-    setNovaTab("detalhes");
+    resetForm();
     fetchEscalas();
   };
 
@@ -80,15 +131,89 @@ const EscalasContent = () => {
   const displayed = tab === "proximas" ? proximas : anteriores;
 
   if (showNovaEscala) {
+    const tabs: { id: NovaEscalaTab; label: string; icon: React.ReactNode; count?: number }[] = [
+      { id: "detalhes", label: "Detalhes", icon: <Info className="w-5 h-5" /> },
+      { id: "participantes", label: "Participantes", icon: <Users className="w-5 h-5" />, count: selectedParticipants.length },
+      { id: "musicas", label: "Músicas", icon: <Music className="w-5 h-5" />, count: musicas.length },
+      { id: "roteiro", label: "Roteiro", icon: <Clock className="w-5 h-5" />, count: roteiro.length },
+    ];
+
     return (
-      <NovaEscalaView
-        novaTab={novaTab}
-        setNovaTab={setNovaTab}
-        form={form}
-        setForm={(f) => setForm(f)}
-        onClose={() => { setShowNovaEscala(false); setNovaTab("detalhes"); }}
-        onSalvar={handleSalvar}
-      />
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto p-6 lg:p-10">
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={resetForm} className="text-foreground hover:text-muted-foreground"><X className="w-6 h-6" /></button>
+          <h1 className="text-xl font-semibold text-foreground">Nova escala</h1>
+          <div className="w-6" />
+        </div>
+
+        <div className="flex bg-card rounded-xl border border-border p-1 mb-6">
+          {tabs.map((t) => (
+            <button key={t.id} onClick={() => setNovaTab(t.id)} className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-lg text-xs font-medium transition-colors ${novaTab === t.id ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              {t.icon}
+              <span className="flex items-center gap-1">
+                {t.count !== undefined && <span>{t.count}</span>}
+                {t.label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {novaTab === "detalhes" && (
+          <div className="space-y-4">
+            <div className="relative">
+              <Input placeholder="Título *" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} className="h-12 rounded-lg pl-10" />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-bold">T</span>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex-1 relative">
+                <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} className="h-12 rounded-lg pl-10" />
+                <label className="absolute -top-2.5 left-3 bg-card px-1 text-xs text-muted-foreground">Data</label>
+              </div>
+              <div className="w-36 relative">
+                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input type="time" value={form.hora} onChange={(e) => setForm({ ...form, hora: e.target.value })} className="h-12 rounded-lg pl-10" />
+                <label className="absolute -top-2.5 left-3 bg-card px-1 text-xs text-muted-foreground">Hora</label>
+              </div>
+            </div>
+            <div className="relative">
+              <Input placeholder="Observações" value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value.slice(0, 500) })} className="h-12 rounded-lg pl-10" />
+              <List className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{form.observacoes.length}/500</span>
+            </div>
+            <div className="bg-card rounded-xl border border-border divide-y divide-border">
+              <div className="flex items-center justify-between px-4 py-3">
+                <div><p className="text-sm font-medium text-foreground">Status</p><p className="text-xs text-primary">Rascunho</p></div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <div className="flex items-center justify-between px-4 py-3">
+                <p className="text-sm font-medium text-foreground">Solicitar confirmação dos participantes</p>
+                <Switch checked={form.confirmacao} onCheckedChange={(v) => setForm({ ...form, confirmacao: v })} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {novaTab === "participantes" && (
+          <EscalaParticipantesTab
+            escalaId={null}
+            selectedParticipants={selectedParticipants}
+            onParticipantsChange={setSelectedParticipants}
+          />
+        )}
+
+        {novaTab === "musicas" && (
+          <EscalaMusicasTab escalaId={null} musicas={musicas} onMusicasChange={setMusicas} />
+        )}
+
+        {novaTab === "roteiro" && (
+          <EscalaRoteiroTab escalaId={null} roteiro={roteiro} onRoteiroChange={setRoteiro} />
+        )}
+
+        <button onClick={handleSalvar} className="fixed bottom-6 right-6 flex items-center gap-2 bg-accent hover:bg-accent/80 text-accent-foreground px-5 py-3 rounded-xl shadow-lg transition-colors">
+          <span className="text-lg">✓</span> Salvar
+        </button>
+      </motion.div>
     );
   }
 
@@ -148,128 +273,6 @@ const EscalasContent = () => {
         <Plus className="w-5 h-5" /> Adicionar
       </button>
     </div>
-  );
-};
-
-interface NovaEscalaProps {
-  novaTab: NovaEscalaTab;
-  setNovaTab: (t: NovaEscalaTab) => void;
-  form: { titulo: string; data: string; hora: string; observacoes: string; confirmacao: boolean };
-  setForm: (f: { titulo: string; data: string; hora: string; observacoes: string; confirmacao: boolean }) => void;
-  onClose: () => void;
-  onSalvar: () => void;
-}
-
-const NovaEscalaView = ({ novaTab, setNovaTab, form, setForm, onClose, onSalvar }: NovaEscalaProps) => {
-  const tabs: { id: NovaEscalaTab; label: string; icon: React.ReactNode; count?: number }[] = [
-    { id: "detalhes", label: "Detalhes", icon: <Info className="w-5 h-5" /> },
-    { id: "participantes", label: "Participantes", icon: <Users className="w-5 h-5" />, count: 0 },
-    { id: "musicas", label: "Músicas", icon: <Music className="w-5 h-5" />, count: 0 },
-    { id: "roteiro", label: "Roteiro", icon: <Clock className="w-5 h-5" />, count: 0 },
-  ];
-
-  return (
-    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto p-6 lg:p-10">
-      <div className="flex items-center justify-between mb-6">
-        <button onClick={onClose} className="text-foreground hover:text-muted-foreground"><X className="w-6 h-6" /></button>
-        <h1 className="text-xl font-semibold text-foreground">Nova escala</h1>
-        <div className="w-6" />
-      </div>
-
-      <div className="flex bg-card rounded-xl border border-border p-1 mb-6">
-        {tabs.map((t) => (
-          <button key={t.id} onClick={() => setNovaTab(t.id)} className={`flex-1 flex flex-col items-center gap-1 py-3 rounded-lg text-xs font-medium transition-colors ${novaTab === t.id ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-            {t.icon}
-            <span className="flex items-center gap-1">
-              {t.count !== undefined && <span>{t.count}</span>}
-              {t.label}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {novaTab === "detalhes" && (
-        <div className="space-y-4">
-          <div className="relative">
-            <Input placeholder="Título *" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} className="h-12 rounded-lg pl-10" />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg font-bold">T</span>
-          </div>
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
-              <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} className="h-12 rounded-lg pl-10" />
-              <label className="absolute -top-2.5 left-3 bg-card px-1 text-xs text-muted-foreground">Data</label>
-            </div>
-            <div className="w-36 relative">
-              <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input type="time" value={form.hora} onChange={(e) => setForm({ ...form, hora: e.target.value })} className="h-12 rounded-lg pl-10" />
-              <label className="absolute -top-2.5 left-3 bg-card px-1 text-xs text-muted-foreground">Hora</label>
-            </div>
-          </div>
-          <div className="relative">
-            <Input placeholder="Observações" value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value.slice(0, 500) })} className="h-12 rounded-lg pl-10" />
-            <List className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{form.observacoes.length}/500</span>
-          </div>
-          <div className="bg-card rounded-xl border border-border divide-y divide-border">
-            <div className="flex items-center justify-between px-4 py-3">
-              <div><p className="text-sm font-medium text-foreground">Status</p><p className="text-xs text-primary">Rascunho</p></div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <div className="flex items-center justify-between px-4 py-3">
-              <p className="text-sm font-medium text-foreground">Solicitar confirmação dos participantes</p>
-              <Switch checked={form.confirmacao} onCheckedChange={(v) => setForm({ ...form, confirmacao: v })} />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {novaTab === "participantes" && (
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Button className="rounded-lg"><Plus className="w-4 h-4 mr-1" /> Adicionar</Button>
-            <Button variant="outline" className="rounded-lg"><Users className="w-4 h-4 mr-1" /> Equipes</Button>
-            <Button variant="outline" className="rounded-lg"><Shuffle className="w-4 h-4 mr-1" /> Sortear</Button>
-          </div>
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-40 h-40 rounded-full bg-accent flex items-center justify-center mb-6"><Users className="w-16 h-16 text-muted-foreground" /></div>
-            <p className="text-sm text-muted-foreground">Para adicionar um participante, toque no botão:</p>
-            <p className="text-sm text-muted-foreground">( + Adicionar )</p>
-          </div>
-        </div>
-      )}
-
-      {novaTab === "musicas" && (
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Button className="rounded-lg"><Plus className="w-4 h-4 mr-1" /> Adicionar</Button>
-            <Button variant="outline" className="rounded-lg"><Shuffle className="w-4 h-4 mr-1" /> Sortear</Button>
-          </div>
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-40 h-40 rounded-full bg-accent flex items-center justify-center mb-6"><Music className="w-16 h-16 text-muted-foreground" /></div>
-            <p className="text-sm text-muted-foreground">Para adicionar uma música, toque no botão:</p>
-            <p className="text-sm text-muted-foreground">( + Adicionar )</p>
-          </div>
-        </div>
-      )}
-
-      {novaTab === "roteiro" && (
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <Button variant="outline" className="rounded-lg"><Plus className="w-4 h-4 mr-1" /> Evento</Button>
-            <Button variant="outline" className="rounded-lg"><List className="w-4 h-4 mr-1" /> Modelos</Button>
-          </div>
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-40 h-40 rounded-full bg-accent flex items-center justify-center mb-6"><Clock className="w-16 h-16 text-muted-foreground" /></div>
-            <p className="text-sm text-muted-foreground">Nenhum item adicionado ao roteiro.</p>
-          </div>
-        </div>
-      )}
-
-      <button onClick={onSalvar} className="fixed bottom-6 right-6 flex items-center gap-2 bg-accent hover:bg-accent/80 text-accent-foreground px-5 py-3 rounded-xl shadow-lg transition-colors">
-        <span className="text-lg">✓</span> Salvar
-      </button>
-    </motion.div>
   );
 };
 
