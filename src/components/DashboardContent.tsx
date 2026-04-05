@@ -1,10 +1,10 @@
 import { motion } from "framer-motion";
-import { Check, ThumbsUp, Music, MessageSquare, ArrowRight, Cake } from "lucide-react";
 import EscalasContent from "./EscalasContent";
 import ConfiguracoesContent from "./ConfiguracoesContent";
 import RepertorioContent from "./RepertorioContent";
 import MensagensContent from "./MensagensContent";
 import MinisterioContent from "./MinisterioContent";
+import HomeContent from "./HomeContent";
 
 const sectionReveal = {
   initial: { opacity: 0, y: 12 },
@@ -14,9 +14,10 @@ const sectionReveal = {
 
 interface Props {
   activeSection: string;
+  onSectionChange?: (section: string) => void;
 }
 
-const DashboardContent = ({ activeSection }: Props) => {
+const DashboardContent = ({ activeSection, onSectionChange }: Props) => {
   return (
     <div className="max-w-4xl mx-auto p-6 lg:p-10">
       {/* Header */}
