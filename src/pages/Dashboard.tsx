@@ -34,7 +34,7 @@ const Dashboard = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <DashboardContent activeSection={activeSection} />
+        <DashboardContent activeSection={activeSection} onSectionChange={setActiveSection} />
       </motion.main>
     </div>
   );
