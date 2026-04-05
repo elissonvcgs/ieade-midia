@@ -32,9 +32,9 @@ interface Profile {
   email: string | null;
 }
 
-interface Member {
+interface MemberWithProfile {
   user_id: string;
-  profiles: Profile;
+  profile: Profile;
 }
 
 const MensagensContent = () => {
@@ -45,7 +45,7 @@ const MensagensContent = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<MemberWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
@@ -85,16 +85,31 @@ const MensagensContent = () => {
   };
 
   const loadMembers = async () => {
-    const { data } = await supabase
+    // First get member user_ids
+    const { data: memberData } = await supabase
       .from("congresso_members")
-      .select("user_id, profiles!inner(user_id, name, email)")
+      .select("user_id")
       .eq("congresso_id", congresso!.id);
-    if (data) {
-      const mapped = data as unknown as Member[];
-      setMembers(mapped);
+
+    if (!memberData || memberData.length === 0) return;
+
+    const userIds = memberData.map(m => m.user_id);
+
+    // Then fetch profiles for those users
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("user_id, name, email")
+      .in("user_id", userIds);
+
+    if (profileData) {
       const pMap: Record<string, Profile> = {};
-      mapped.forEach((m) => { pMap[m.user_id] = m.profiles; });
+      const mapped: MemberWithProfile[] = [];
+      profileData.forEach((p) => {
+        pMap[p.user_id] = p;
+        mapped.push({ user_id: p.user_id, profile: p });
+      });
       setProfiles(pMap);
+      setMembers(mapped);
     }
   };
 
@@ -302,11 +317,11 @@ const MensagensContent = () => {
                           />
                         )}
                         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
-                          {getInitials(m.profiles.name)}
+                          {getInitials(m.profile.name)}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-foreground">{m.profiles.name}</p>
-                          <p className="text-xs text-muted-foreground">{m.profiles.email}</p>
+                          <p className="text-sm font-medium text-foreground">{m.profile.name}</p>
+                          <p className="text-xs text-muted-foreground">{m.profile.email}</p>
                         </div>
                       </label>
                     ))}
