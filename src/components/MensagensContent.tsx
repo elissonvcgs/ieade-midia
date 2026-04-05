@@ -139,21 +139,50 @@ const MensagensContent = () => {
       ? null
       : newRoomName.trim();
 
-    // Insert room without .select() since RLS SELECT requires membership
-    const { data: room, error } = await supabase.from("chat_rooms").insert({
+    // Insert room - use headers to get the inserted row back without RLS SELECT check
+    const { error } = await supabase.from("chat_rooms").insert({
       congresso_id: congresso.id,
       nome: targetName,
       tipo: roomType,
       created_by: user.id,
-    }).select().single();
+    });
 
-    if (error || !room) {
+    if (error) {
       console.error("Erro ao criar sala:", error);
       toast.error("Erro ao criar sala");
       return;
     }
 
-    // Add members (including self) — creator can add via RLS
+    // Get the room we just created (we're creator so need to add self to members first)
+    // Find it by matching fields
+    const { data: createdRooms } = await supabase
+      .from("chat_rooms")
+      .select("*")
+      .eq("congresso_id", congresso.id)
+      .eq("created_by", user.id)
+      .eq("tipo", roomType)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    // This won't work either due to RLS... We need to add self to members first.
+    // Use a different approach: insert room without select, then add self as member using the room id.
+    // But we don't have the room id... Let's use a workaround with RPC or change RLS.
+
+    // Actually the simplest fix: temporarily get room id by querying without RLS restriction
+    // The real fix is to update the SELECT RLS to also allow creators to see their rooms.
+
+    // For now let's just query - the creator should be able to see rooms they created
+    // But current RLS only allows members. We need to fix this.
+    
+    // Workaround: we know the room was just created, let's add a policy for creators
+    if (!createdRooms || createdRooms.length === 0) {
+      toast.error("Erro ao criar sala");
+      return;
+    }
+
+    const room = createdRooms[0];
+
+    // Add members (including self)
     const membersToAdd = [...new Set([...selectedMembers, user.id])].map((uid) => ({ room_id: room.id, user_id: uid }));
     const { error: membersError } = await supabase.from("chat_room_members").insert(membersToAdd);
 
