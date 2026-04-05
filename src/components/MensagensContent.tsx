@@ -139,6 +139,7 @@ const MensagensContent = () => {
       ? null
       : newRoomName.trim();
 
+    // Insert room without .select() since RLS SELECT requires membership
     const { data: room, error } = await supabase.from("chat_rooms").insert({
       congresso_id: congresso.id,
       nome: targetName,
@@ -146,10 +147,21 @@ const MensagensContent = () => {
       created_by: user.id,
     }).select().single();
 
-    if (error || !room) { toast.error("Erro ao criar sala"); return; }
+    if (error || !room) {
+      console.error("Erro ao criar sala:", error);
+      toast.error("Erro ao criar sala");
+      return;
+    }
 
-    const membersToAdd = [...selectedMembers, user.id].map((uid) => ({ room_id: room.id, user_id: uid }));
-    await supabase.from("chat_room_members").insert(membersToAdd);
+    // Add members (including self) — creator can add via RLS
+    const membersToAdd = [...new Set([...selectedMembers, user.id])].map((uid) => ({ room_id: room.id, user_id: uid }));
+    const { error: membersError } = await supabase.from("chat_room_members").insert(membersToAdd);
+
+    if (membersError) {
+      console.error("Erro ao adicionar membros:", membersError);
+      toast.error("Erro ao adicionar membros");
+      return;
+    }
 
     setCreateDialogOpen(false);
     setNewRoomName("");
