@@ -317,11 +317,11 @@ const MensagensContent = () => {
                           />
                         )}
                         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
-                          {getInitials(m.profiles.name)}
+                          {getInitials(m.profile.name)}
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-foreground">{m.profiles.name}</p>
-                          <p className="text-xs text-muted-foreground">{m.profiles.email}</p>
+                          <p className="text-sm font-medium text-foreground">{m.profile.name}</p>
+                          <p className="text-xs text-muted-foreground">{m.profile.email}</p>
                         </div>
                       </label>
                     ))}
