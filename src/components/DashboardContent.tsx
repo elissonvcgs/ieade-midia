@@ -27,7 +27,7 @@ const DashboardContent = ({ activeSection, onSectionChange }: Props) => {
         <div className="w-8" />
       </div>
 
-      {activeSection === "inicio" && <HomeContent />}
+      {activeSection === "inicio" && onSectionChange && <HomeContent onSectionChange={onSectionChange} />}
       {activeSection === "escalas" && <EscalasContent />}
       {activeSection === "repertorio" && <RepertorioContent />}
       {activeSection === "mensagens" && <MensagensContent />}
