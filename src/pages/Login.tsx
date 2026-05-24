@@ -35,7 +35,7 @@ const Login = () => {
     if (error) {
       toast({ title: "Erro ao entrar", description: error.message, variant: "destructive" });
     } else {
-      navigate("/congresso");
+      navigate("/dashboard");
     }
   };
 
