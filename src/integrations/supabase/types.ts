@@ -612,7 +612,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_add_chat_room_member: {
+        Args: {
+          _actor_user_id: string
+          _member_user_id: string
+          _room_id: string
+        }
+        Returns: boolean
+      }
+      is_chat_room_member: {
+        Args: { _room_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_congresso_member: {
+        Args: { _congresso_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
