@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, MessageCircle, Search, Send, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -61,11 +61,6 @@ const MensagensContent = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!congresso || !user) return;
-    loadData();
-  }, [congresso, user]);
-
-  useEffect(() => {
     if (!selectedRoom) return;
     loadMessages(selectedRoom.id);
 
@@ -84,7 +79,7 @@ const MensagensContent = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!congresso) return;
     setLoading(true);
 
@@ -152,7 +147,12 @@ const MensagensContent = () => {
     }
 
     setLoading(false);
-  };
+  }, [congresso, user]);
+
+  useEffect(() => {
+    if (!congresso || !user) return;
+    loadData();
+  }, [congresso, user, loadData]);
 
   const loadMessages = async (roomId: string) => {
     const { data, error } = await supabase
