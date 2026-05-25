@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { X, CalendarDays, Clock, Users, Music, ListChecks, FileText } from "lucide-react";
+import { X, CalendarDays, Clock, Users, Music, ListChecks, FileText, Pencil, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface Escala {
   id: string;
@@ -11,6 +17,7 @@ interface Escala {
   hora: string | null;
   observacoes: string | null;
   status: string;
+  created_by?: string;
 }
 
 interface Participante {
@@ -23,11 +30,34 @@ interface Participante {
 interface Musica { nome: string; artista: string | null; tom: string | null; ordem: number; }
 interface Roteiro { titulo: string; descricao: string | null; hora: string | null; ordem: number; }
 
-const EscalaDetalhes = ({ escala, congressoId, onClose }: { escala: Escala; congressoId: string; onClose: () => void }) => {
+interface Props {
+  escala: Escala;
+  congressoId: string;
+  onClose: () => void;
+  canManage?: boolean;
+  onEdit?: () => void;
+  onDeleted?: () => void;
+}
+
+const EscalaDetalhes = ({ escala, congressoId, onClose, canManage, onEdit, onDeleted }: Props) => {
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [musicas, setMusicas] = useState<Musica[]>([]);
   const [roteiro, setRoteiro] = useState<Roteiro[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const handleDelete = async () => {
+    await supabase.from("escala_musicas").delete().eq("escala_id", escala.id);
+    await supabase.from("escala_participantes").delete().eq("escala_id", escala.id);
+    await supabase.from("escala_roteiro").delete().eq("escala_id", escala.id);
+    const { error } = await supabase.from("escalas").delete().eq("id", escala.id);
+    if (error) {
+      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Escala excluída" });
+      onDeleted?.();
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -68,7 +98,32 @@ const EscalaDetalhes = ({ escala, congressoId, onClose }: { escala: Escala; cong
       <div className="flex items-center justify-between mb-6">
         <button onClick={onClose} className="text-foreground hover:text-muted-foreground"><X className="w-6 h-6" /></button>
         <h1 className="text-xl font-semibold text-foreground">Detalhes da escala</h1>
-        <div className="w-6" />
+        {canManage ? (
+          <div className="flex items-center gap-2">
+            <Button size="icon" variant="ghost" onClick={onEdit} title="Editar">
+              <Pencil className="w-5 h-5" />
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" title="Excluir">
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir escala?</AlertDialogTitle>
+                  <AlertDialogDescription>Esta ação não pode ser desfeita. Todos os dados desta escala serão removidos.</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        ) : (
+          <div className="w-6" />
+        )}
       </div>
 
       <div className="bg-card rounded-xl border border-border p-5 mb-4">
