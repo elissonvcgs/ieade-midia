@@ -49,6 +49,8 @@ const EscalasContent = () => {
   const [novaTab, setNovaTab] = useState<NovaEscalaTab>("detalhes");
   const [escalas, setEscalas] = useState<Escala[]>([]);
   const [selectedEscala, setSelectedEscala] = useState<Escala | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ titulo: "", data: "", hora: "", observacoes: "", confirmacao: true });
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
@@ -71,6 +73,17 @@ const EscalasContent = () => {
 
   useEffect(() => { fetchEscalas(); }, [congresso]);
 
+  useEffect(() => {
+    if (!congresso || !user) return;
+    supabase
+      .from("congresso_members")
+      .select("role")
+      .eq("congresso_id", congresso.id)
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setIsAdmin(data?.role === "admin"));
+  }, [congresso, user]);
+
   const resetForm = () => {
     setForm({ titulo: "", data: "", hora: "", observacoes: "", confirmacao: true });
     setSelectedParticipants([]);
@@ -78,28 +91,70 @@ const EscalasContent = () => {
     setRoteiro([]);
     setShowNovaEscala(false);
     setNovaTab("detalhes");
+    setEditingId(null);
+  };
+
+  const startEdit = async (escala: Escala) => {
+    setEditingId(escala.id);
+    setForm({
+      titulo: escala.titulo,
+      data: escala.data || "",
+      hora: escala.hora ? escala.hora.slice(0, 5) : "",
+      observacoes: escala.observacoes || "",
+      confirmacao: escala.confirmacao,
+    });
+    const [partsRes, musRes, rotRes] = await Promise.all([
+      supabase.from("escala_participantes").select("user_id").eq("escala_id", escala.id),
+      supabase.from("escala_musicas").select("*").eq("escala_id", escala.id).order("ordem"),
+      supabase.from("escala_roteiro").select("*").eq("escala_id", escala.id).order("ordem"),
+    ]);
+    setSelectedParticipants(partsRes.data?.map((p) => p.user_id) || []);
+    setMusicas((musRes.data || []).map((m: any) => ({ nome: m.nome, artista: m.artista, tom: m.tom, ordem: m.ordem })));
+    setRoteiro((rotRes.data || []).map((r: any) => ({ titulo: r.titulo, descricao: r.descricao || "", hora: r.hora || "", ordem: r.ordem })));
+    setSelectedEscala(null);
+    setShowNovaEscala(true);
+    setNovaTab("detalhes");
   };
 
   const handleSalvar = async () => {
     if (!form.titulo.trim() || !user || !congresso) return;
 
-    // 1. Create escala
-    const { data: escalaData, error } = await supabase.from("escalas").insert({
-      congresso_id: congresso.id,
-      titulo: form.titulo,
-      data: form.data || null,
-      hora: form.hora || null,
-      observacoes: form.observacoes || null,
-      confirmacao: form.confirmacao,
-      created_by: user.id,
-    }).select().single();
-
-    if (error || !escalaData) {
-      toast({ title: "Erro", description: error?.message, variant: "destructive" });
-      return;
+    let escalaId: string;
+    if (editingId) {
+      const { error } = await supabase.from("escalas").update({
+        titulo: form.titulo,
+        data: form.data || null,
+        hora: form.hora || null,
+        observacoes: form.observacoes || null,
+        confirmacao: form.confirmacao,
+      }).eq("id", editingId);
+      if (error) {
+        toast({ title: "Erro", description: error.message, variant: "destructive" });
+        return;
+      }
+      escalaId = editingId;
+      // Clear existing related rows so we can re-insert fresh
+      await Promise.all([
+        supabase.from("escala_participantes").delete().eq("escala_id", escalaId),
+        supabase.from("escala_musicas").delete().eq("escala_id", escalaId),
+        supabase.from("escala_roteiro").delete().eq("escala_id", escalaId),
+      ]);
+    } else {
+      const { data: escalaData, error } = await supabase.from("escalas").insert({
+        congresso_id: congresso.id,
+        titulo: form.titulo,
+        data: form.data || null,
+        hora: form.hora || null,
+        observacoes: form.observacoes || null,
+        confirmacao: form.confirmacao,
+        created_by: user.id,
+      }).select().single();
+      if (error || !escalaData) {
+        toast({ title: "Erro", description: error?.message, variant: "destructive" });
+        return;
+      }
+      escalaId = escalaData.id;
     }
-
-    const escalaId = escalaData.id;
 
     // 2. Save participants
     if (selectedParticipants.length > 0) {
@@ -122,7 +177,7 @@ const EscalasContent = () => {
       );
     }
 
-    toast({ title: "Escala criada!" });
+    toast({ title: editingId ? "Escala atualizada!" : "Escala criada!" });
     resetForm();
     fetchEscalas();
   };
@@ -133,7 +188,17 @@ const EscalasContent = () => {
   const displayed = tab === "proximas" ? proximas : anteriores;
 
   if (selectedEscala && congresso) {
-    return <EscalaDetalhes escala={selectedEscala} congressoId={congresso.id} onClose={() => setSelectedEscala(null)} />;
+    const canManage = !!user && (selectedEscala.created_by === user.id || isAdmin);
+    return (
+      <EscalaDetalhes
+        escala={selectedEscala}
+        congressoId={congresso.id}
+        canManage={canManage}
+        onEdit={() => startEdit(selectedEscala)}
+        onDeleted={() => { setSelectedEscala(null); fetchEscalas(); }}
+        onClose={() => setSelectedEscala(null)}
+      />
+    );
   }
 
   if (showNovaEscala) {
@@ -148,7 +213,7 @@ const EscalasContent = () => {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto p-6 lg:p-10">
         <div className="flex items-center justify-between mb-6">
           <button onClick={resetForm} className="text-foreground hover:text-muted-foreground"><X className="w-6 h-6" /></button>
-          <h1 className="text-xl font-semibold text-foreground">Nova escala</h1>
+        <h1 className="text-xl font-semibold text-foreground">{editingId ? "Editar escala" : "Nova escala"}</h1>
           <div className="w-6" />
         </div>
 

@@ -624,6 +624,10 @@ export type Database = {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
       }
+      is_congresso_admin: {
+        Args: { _congresso_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_congresso_member: {
         Args: { _congresso_id: string; _user_id: string }
         Returns: boolean
