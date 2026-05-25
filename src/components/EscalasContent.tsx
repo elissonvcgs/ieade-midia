@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import EscalaParticipantesTab from "@/components/escalas/EscalaParticipantesTab";
 import EscalaMusicasTab from "@/components/escalas/EscalaMusicasTab";
 import EscalaRoteiroTab from "@/components/escalas/EscalaRoteiroTab";
+import EscalaDetalhes from "@/components/escalas/EscalaDetalhes";
 
 type EscalaTab = "proximas" | "anteriores";
 type NovaEscalaTab = "detalhes" | "participantes" | "musicas" | "roteiro";
@@ -47,6 +48,7 @@ const EscalasContent = () => {
   const [showNovaEscala, setShowNovaEscala] = useState(false);
   const [novaTab, setNovaTab] = useState<NovaEscalaTab>("detalhes");
   const [escalas, setEscalas] = useState<Escala[]>([]);
+  const [selectedEscala, setSelectedEscala] = useState<Escala | null>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ titulo: "", data: "", hora: "", observacoes: "", confirmacao: true });
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
@@ -129,6 +131,10 @@ const EscalasContent = () => {
   const proximas = escalas.filter((e) => !e.data || e.data >= today);
   const anteriores = escalas.filter((e) => e.data && e.data < today);
   const displayed = tab === "proximas" ? proximas : anteriores;
+
+  if (selectedEscala && congresso) {
+    return <EscalaDetalhes escala={selectedEscala} congressoId={congresso.id} onClose={() => setSelectedEscala(null)} />;
+  }
 
   if (showNovaEscala) {
     const tabs: { id: NovaEscalaTab; label: string; icon: React.ReactNode; count?: number }[] = [
@@ -250,7 +256,11 @@ const EscalasContent = () => {
       ) : (
         <div className="space-y-3">
           {displayed.map((escala) => (
-            <div key={escala.id} className="bg-card rounded-xl border border-border p-4 flex items-start gap-4">
+            <button
+              key={escala.id}
+              onClick={() => setSelectedEscala(escala)}
+              className="w-full text-left bg-card rounded-xl border border-border p-4 flex items-start gap-4 hover:bg-accent/30 transition-colors"
+            >
               <div className="text-center min-w-[50px]">
                 <span className="text-2xl font-bold text-primary">
                   {escala.data ? new Date(escala.data + "T00:00").getDate() : "--"}
@@ -264,7 +274,7 @@ const EscalasContent = () => {
                 <p className="text-sm text-muted-foreground">{escala.hora || "Horário não definido"}</p>
               </div>
               <span className="text-xs text-muted-foreground bg-accent px-2 py-1 rounded">{escala.status}</span>
-            </div>
+            </button>
           ))}
         </div>
       )}
