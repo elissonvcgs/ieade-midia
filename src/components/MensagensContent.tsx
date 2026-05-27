@@ -396,6 +396,51 @@ const MensagensContent = () => {
     return ids.map((id) => profiles[id]?.name).filter(Boolean).join(", ");
   };
 
+  const deleteGroup = async () => {
+    if (!selectedRoom || !user) return;
+    setActionLoading(true);
+    // Best-effort cleanup of messages and members; RLS will allow only what user can do
+    await supabase.from("chat_messages").delete().eq("room_id", selectedRoom.id);
+    await supabase.from("chat_room_members").delete().eq("room_id", selectedRoom.id);
+    const { error } = await supabase.from("chat_rooms").delete().eq("id", selectedRoom.id);
+    setActionLoading(false);
+    if (error) {
+      console.error(error);
+      toast.error("Erro ao excluir grupo");
+      return;
+    }
+    toast.success("Grupo excluído");
+    const removedId = selectedRoom.id;
+    setRooms((prev) => prev.filter((r) => r.id !== removedId));
+    setRoomMembers((prev) => prev.filter((rm) => rm.room_id !== removedId));
+    setSelectedRoom(null);
+    setMessages([]);
+    setConfirmAction(null);
+  };
+
+  const leaveGroup = async () => {
+    if (!selectedRoom || !user) return;
+    setActionLoading(true);
+    const { error } = await supabase
+      .from("chat_room_members")
+      .delete()
+      .eq("room_id", selectedRoom.id)
+      .eq("user_id", user.id);
+    setActionLoading(false);
+    if (error) {
+      console.error(error);
+      toast.error("Erro ao sair do grupo");
+      return;
+    }
+    toast.success("Você saiu do grupo");
+    const removedId = selectedRoom.id;
+    setRooms((prev) => prev.filter((r) => r.id !== removedId));
+    setRoomMembers((prev) => prev.filter((rm) => !(rm.room_id === removedId && rm.user_id === user.id)));
+    setSelectedRoom(null);
+    setMessages([]);
+    setConfirmAction(null);
+  };
+
   const renderAttachment = (msg: Message, isOwn: boolean) => {
     if (!msg.attachment_url) return null;
     const url = signedUrls[msg.attachment_url];
