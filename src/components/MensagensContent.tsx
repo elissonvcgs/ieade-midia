@@ -712,6 +712,31 @@ const MensagensContent = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmAction !== null} onOpenChange={(o) => !o && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === "delete" ? "Excluir grupo?" : "Sair do grupo?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === "delete"
+                ? "Esta ação não pode ser desfeita. O grupo e todas as mensagens serão removidos."
+                : "Você deixará de receber mensagens deste grupo."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={actionLoading}
+              onClick={(e) => { e.preventDefault(); confirmAction === "delete" ? deleteGroup() : leaveGroup(); }}
+              className={confirmAction === "delete" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+            >
+              {actionLoading ? "Processando..." : confirmAction === "delete" ? "Excluir" : "Sair"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
