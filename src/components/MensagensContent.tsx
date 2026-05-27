@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, FileText, Image as ImageIcon, MessageCircle, Mic, Paperclip, Plus, Search, Send, User, Users, X } from "lucide-react";
+import { ArrowLeft, FileText, Image as ImageIcon, LogOut, MessageCircle, Mic, Paperclip, Plus, Search, Send, Trash2, User, Users, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCongresso } from "@/hooks/useCongresso";
@@ -8,6 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -73,6 +83,8 @@ const MensagensContent = () => {
   const [groupName, setGroupName] = useState("");
   const [groupSelected, setGroupSelected] = useState<string[]>([]);
   const [creatingGroup, setCreatingGroup] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<null | "delete" | "leave">(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
