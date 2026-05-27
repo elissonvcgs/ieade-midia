@@ -596,6 +596,17 @@ const MensagensContent = () => {
                   <h3 className="truncate font-semibold text-foreground">{headerTitle}</h3>
                   <p className="truncate text-xs text-muted-foreground">{headerSubtitle}</p>
                 </div>
+                {selectedRoom.tipo === "group" && (
+                  selectedRoom.created_by === user?.id ? (
+                    <Button variant="ghost" size="icon" onClick={() => setConfirmAction("delete")} title="Excluir grupo" className="text-destructive hover:text-destructive">
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" onClick={() => setConfirmAction("leave")} title="Sair do grupo">
+                      <LogOut className="h-5 w-5" />
+                    </Button>
+                  )
+                )}
               </div>
 
               <ScrollArea className="flex-1 px-4 py-5">
