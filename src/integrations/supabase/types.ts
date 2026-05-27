@@ -57,21 +57,30 @@ export type Database = {
       }
       chat_messages: {
         Row: {
-          conteudo: string
+          attachment_name: string | null
+          attachment_type: string | null
+          attachment_url: string | null
+          conteudo: string | null
           created_at: string
           id: string
           room_id: string
           user_id: string
         }
         Insert: {
-          conteudo: string
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          conteudo?: string | null
           created_at?: string
           id?: string
           room_id: string
           user_id: string
         }
         Update: {
-          conteudo?: string
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
+          conteudo?: string | null
           created_at?: string
           id?: string
           room_id?: string
