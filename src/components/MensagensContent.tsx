@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, FileText, Image as ImageIcon, MessageCircle, Mic, Paperclip, Plus, Search, Send, User, Users, X } from "lucide-react";
+import { ArrowLeft, FileText, Image as ImageIcon, LogOut, MessageCircle, Mic, Paperclip, Plus, Search, Send, Trash2, User, Users, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useCongresso } from "@/hooks/useCongresso";
@@ -8,6 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -73,6 +83,8 @@ const MensagensContent = () => {
   const [groupName, setGroupName] = useState("");
   const [groupSelected, setGroupSelected] = useState<string[]>([]);
   const [creatingGroup, setCreatingGroup] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<null | "delete" | "leave">(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -384,6 +396,51 @@ const MensagensContent = () => {
     return ids.map((id) => profiles[id]?.name).filter(Boolean).join(", ");
   };
 
+  const deleteGroup = async () => {
+    if (!selectedRoom || !user) return;
+    setActionLoading(true);
+    // Best-effort cleanup of messages and members; RLS will allow only what user can do
+    await supabase.from("chat_messages").delete().eq("room_id", selectedRoom.id);
+    await supabase.from("chat_room_members").delete().eq("room_id", selectedRoom.id);
+    const { error } = await supabase.from("chat_rooms").delete().eq("id", selectedRoom.id);
+    setActionLoading(false);
+    if (error) {
+      console.error(error);
+      toast.error("Erro ao excluir grupo");
+      return;
+    }
+    toast.success("Grupo excluído");
+    const removedId = selectedRoom.id;
+    setRooms((prev) => prev.filter((r) => r.id !== removedId));
+    setRoomMembers((prev) => prev.filter((rm) => rm.room_id !== removedId));
+    setSelectedRoom(null);
+    setMessages([]);
+    setConfirmAction(null);
+  };
+
+  const leaveGroup = async () => {
+    if (!selectedRoom || !user) return;
+    setActionLoading(true);
+    const { error } = await supabase
+      .from("chat_room_members")
+      .delete()
+      .eq("room_id", selectedRoom.id)
+      .eq("user_id", user.id);
+    setActionLoading(false);
+    if (error) {
+      console.error(error);
+      toast.error("Erro ao sair do grupo");
+      return;
+    }
+    toast.success("Você saiu do grupo");
+    const removedId = selectedRoom.id;
+    setRooms((prev) => prev.filter((r) => r.id !== removedId));
+    setRoomMembers((prev) => prev.filter((rm) => !(rm.room_id === removedId && rm.user_id === user.id)));
+    setSelectedRoom(null);
+    setMessages([]);
+    setConfirmAction(null);
+  };
+
   const renderAttachment = (msg: Message, isOwn: boolean) => {
     if (!msg.attachment_url) return null;
     const url = signedUrls[msg.attachment_url];
@@ -539,6 +596,17 @@ const MensagensContent = () => {
                   <h3 className="truncate font-semibold text-foreground">{headerTitle}</h3>
                   <p className="truncate text-xs text-muted-foreground">{headerSubtitle}</p>
                 </div>
+                {selectedRoom.tipo === "group" && (
+                  selectedRoom.created_by === user?.id ? (
+                    <Button variant="ghost" size="icon" onClick={() => setConfirmAction("delete")} title="Excluir grupo" className="text-destructive hover:text-destructive">
+                      <Trash2 className="h-5 w-5" />
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" onClick={() => setConfirmAction("leave")} title="Sair do grupo">
+                      <LogOut className="h-5 w-5" />
+                    </Button>
+                  )
+                )}
               </div>
 
               <ScrollArea className="flex-1 px-4 py-5">
@@ -644,6 +712,31 @@ const MensagensContent = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmAction !== null} onOpenChange={(o) => !o && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === "delete" ? "Excluir grupo?" : "Sair do grupo?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === "delete"
+                ? "Esta ação não pode ser desfeita. O grupo e todas as mensagens serão removidos."
+                : "Você deixará de receber mensagens deste grupo."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={actionLoading}
+              onClick={(e) => { e.preventDefault(); confirmAction === "delete" ? deleteGroup() : leaveGroup(); }}
+              className={confirmAction === "delete" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : ""}
+            >
+              {actionLoading ? "Processando..." : confirmAction === "delete" ? "Excluir" : "Sair"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
