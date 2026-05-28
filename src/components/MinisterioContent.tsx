@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Users, UserCog, Tags, Eye, EyeOff, Lock, Plus, X, Trash2, ChevronRight } from "lucide-react";
+import { Users, UserCog, Tags, Eye, EyeOff, Lock, Plus, X, Trash2, ChevronRight, Link2, Mail, Shield, ShieldOff, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCongresso } from "@/hooks/useCongresso";
 import { useAuth } from "@/hooks/useAuth";
@@ -67,6 +67,10 @@ const MinisterioContent = () => {
   // Assign function dialog
   const [assignDialog, setAssignDialog] = useState<{ memberId: string; memberName: string } | null>(null);
   const [memberFuncoes, setMemberFuncoes] = useState<string[]>([]);
+
+  // Invite dialog
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
 
   useEffect(() => {
     if (!congresso || !user) return;
@@ -194,6 +198,44 @@ const MinisterioContent = () => {
   };
 
   const initials = (name: string) => name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+
+  const inviteLink = congresso ? `${window.location.origin}/congresso?codigo=${congresso.codigo}` : "";
+
+  const copyInviteLink = async () => {
+    if (!inviteLink) return;
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      toast.success("Link copiado");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+
+  const sendInviteEmail = () => {
+    if (!inviteEmail.trim() || !congresso) return;
+    const subject = encodeURIComponent(`Convite para o ministério ${congresso.nome}`);
+    const body = encodeURIComponent(
+      `Olá!\n\nVocê foi convidado(a) para participar do ministério "${congresso.nome}".\n\nAcesse o link abaixo para ingressar:\n${inviteLink}\n\nOu use o código: ${congresso.codigo}`
+    );
+    window.location.href = `mailto:${inviteEmail.trim()}?subject=${subject}&body=${body}`;
+  };
+
+  const toggleAdmin = async (memberUserId: string, currentRole: string) => {
+    if (!congresso) return;
+    if (memberUserId === user?.id) {
+      toast.error("Você não pode alterar seu próprio papel");
+      return;
+    }
+    const newRole = currentRole === "admin" ? "member" : "admin";
+    const { error } = await supabase
+      .from("congresso_members")
+      .update({ role: newRole })
+      .eq("congresso_id", congresso.id)
+      .eq("user_id", memberUserId);
+    if (error) { toast.error("Erro ao alterar papel"); return; }
+    toast.success(newRole === "admin" ? "Promovido a administrador" : "Removido como administrador");
+    loadData();
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center py-20 text-muted-foreground">Carregando...</div>;
@@ -336,6 +378,12 @@ const MinisterioContent = () => {
               </div>
             </div>
           </div>
+
+          {isAdmin && (
+            <Button variant="outline" className="w-full" onClick={() => setInviteOpen(true)}>
+              <UserCog className="w-4 h-4 mr-2" /> Convidar membros
+            </Button>
+          )}
         </div>
       ) : (
         /* Members tab */
@@ -362,6 +410,15 @@ const MinisterioContent = () => {
                   <p className="text-xs text-primary font-medium">Administrador</p>
                 )}
               </div>
+              {isAdmin && m.user_id !== user?.id && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleAdmin(m.user_id, m.role); }}
+                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                  title={m.role === "admin" ? "Remover admin" : "Tornar admin"}
+                >
+                  {m.role === "admin" ? <ShieldOff className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                </button>
+              )}
               {isAdmin && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
             </div>
           ))}
@@ -391,6 +448,51 @@ const MinisterioContent = () => {
             {funcoes.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-4">Nenhuma função cadastrada. Vá em Funções para criar.</p>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invite dialog */}
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convidar membros</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Link2 className="w-4 h-4" /> Link de convite
+              </p>
+              <div className="flex gap-2">
+                <Input value={inviteLink} readOnly className="font-mono text-xs" />
+                <Button type="button" onClick={copyInviteLink} size="icon" variant="outline">
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Compartilhe este link. Quem abrir entra direto no ministério usando o código <span className="font-mono">{congresso?.codigo}</span>.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Mail className="w-4 h-4" /> Convidar por email
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                />
+                <Button type="button" onClick={sendInviteEmail} disabled={!inviteEmail.trim()}>
+                  Enviar
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Abre seu cliente de email com o convite pronto para envio.
+              </p>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
