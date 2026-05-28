@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { UserPlus, Plus, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,15 @@ const Congresso = () => {
   const { user } = useAuth();
   const { setCongresso } = useCongresso();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const c = searchParams.get("codigo");
+    if (c) {
+      setCodigo(c.toUpperCase());
+      setActiveTab("ingressar");
+    }
+  }, [searchParams]);
 
   const handleIngressar = async (e: React.FormEvent) => {
     e.preventDefault();
