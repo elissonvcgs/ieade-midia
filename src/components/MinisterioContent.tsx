@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Users, UserCog, Tags, Eye, EyeOff, Lock, Plus, X, Trash2, ChevronRight } from "lucide-react";
+import { Users, UserCog, Tags, Eye, EyeOff, Lock, Plus, X, Trash2, ChevronRight, Link2, Mail, Shield, ShieldOff, Copy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCongresso } from "@/hooks/useCongresso";
 import { useAuth } from "@/hooks/useAuth";
