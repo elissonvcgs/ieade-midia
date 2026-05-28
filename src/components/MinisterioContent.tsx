@@ -451,6 +451,51 @@ const MinisterioContent = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Invite dialog */}
+      <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Convidar membros</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Link2 className="w-4 h-4" /> Link de convite
+              </p>
+              <div className="flex gap-2">
+                <Input value={inviteLink} readOnly className="font-mono text-xs" />
+                <Button type="button" onClick={copyInviteLink} size="icon" variant="outline">
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Compartilhe este link. Quem abrir entra direto no ministério usando o código <span className="font-mono">{congresso?.codigo}</span>.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Mail className="w-4 h-4" /> Convidar por email
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                />
+                <Button type="button" onClick={sendInviteEmail} disabled={!inviteEmail.trim()}>
+                  Enviar
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Abre seu cliente de email com o convite pronto para envio.
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };
