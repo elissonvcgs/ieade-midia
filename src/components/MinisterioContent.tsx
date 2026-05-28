@@ -410,6 +410,15 @@ const MinisterioContent = () => {
                   <p className="text-xs text-primary font-medium">Administrador</p>
                 )}
               </div>
+              {isAdmin && m.user_id !== user?.id && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleAdmin(m.user_id, m.role); }}
+                  className="p-2 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
+                  title={m.role === "admin" ? "Remover admin" : "Tornar admin"}
+                >
+                  {m.role === "admin" ? <ShieldOff className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
+                </button>
+              )}
               {isAdmin && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
             </div>
           ))}
