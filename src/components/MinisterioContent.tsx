@@ -68,6 +68,10 @@ const MinisterioContent = () => {
   const [assignDialog, setAssignDialog] = useState<{ memberId: string; memberName: string } | null>(null);
   const [memberFuncoes, setMemberFuncoes] = useState<string[]>([]);
 
+  // Invite dialog
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+
   useEffect(() => {
     if (!congresso || !user) return;
     loadData();
