@@ -378,6 +378,12 @@ const MinisterioContent = () => {
               </div>
             </div>
           </div>
+
+          {isAdmin && (
+            <Button variant="outline" className="w-full" onClick={() => setInviteOpen(true)}>
+              <UserCog className="w-4 h-4 mr-2" /> Convidar membros
+            </Button>
+          )}
         </div>
       ) : (
         /* Members tab */
