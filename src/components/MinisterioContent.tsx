@@ -199,6 +199,44 @@ const MinisterioContent = () => {
 
   const initials = (name: string) => name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
 
+  const inviteLink = congresso ? `${window.location.origin}/congresso?codigo=${congresso.codigo}` : "";
+
+  const copyInviteLink = async () => {
+    if (!inviteLink) return;
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      toast.success("Link copiado");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+
+  const sendInviteEmail = () => {
+    if (!inviteEmail.trim() || !congresso) return;
+    const subject = encodeURIComponent(`Convite para o ministério ${congresso.nome}`);
+    const body = encodeURIComponent(
+      `Olá!\n\nVocê foi convidado(a) para participar do ministério "${congresso.nome}".\n\nAcesse o link abaixo para ingressar:\n${inviteLink}\n\nOu use o código: ${congresso.codigo}`
+    );
+    window.location.href = `mailto:${inviteEmail.trim()}?subject=${subject}&body=${body}`;
+  };
+
+  const toggleAdmin = async (memberUserId: string, currentRole: string) => {
+    if (!congresso) return;
+    if (memberUserId === user?.id) {
+      toast.error("Você não pode alterar seu próprio papel");
+      return;
+    }
+    const newRole = currentRole === "admin" ? "member" : "admin";
+    const { error } = await supabase
+      .from("congresso_members")
+      .update({ role: newRole })
+      .eq("congresso_id", congresso.id)
+      .eq("user_id", memberUserId);
+    if (error) { toast.error("Erro ao alterar papel"); return; }
+    toast.success(newRole === "admin" ? "Promovido a administrador" : "Removido como administrador");
+    loadData();
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center py-20 text-muted-foreground">Carregando...</div>;
   }
