@@ -35,7 +35,7 @@ const Register = () => {
       toast({ title: "Erro ao cadastrar", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Conta criada!", description: "Você já pode usar o sistema." });
-      navigate("/congresso");
+      navigate("/dashboard");
     }
   };
 
