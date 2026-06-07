@@ -50,7 +50,7 @@ const AvisosContent = () => {
       .order("destaque", { ascending: false })
       .order("created_at", { ascending: false });
 
-    const list = (data || []) as Aviso[];
+    const list = ((data || []) as unknown) as Aviso[];
     const ids = Array.from(new Set(list.map((a) => a.created_by)));
     if (ids.length) {
       const { data: profs } = await supabase.from("profiles").select("user_id, name").in("user_id", ids);
@@ -120,7 +120,7 @@ const AvisosContent = () => {
       conteudo: conteudo.trim() || null,
       image_url,
       destaque,
-    });
+    } as any);
     setSubmitting(false);
     if (error) {
       toast({ title: "Erro ao publicar", description: error.message, variant: "destructive" });
