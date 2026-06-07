@@ -653,11 +653,13 @@ const DetailList = ({
   items,
   memberById,
   escalas,
+  onInspect,
 }: {
   cardId: string | null;
   items: any[];
   memberById: (id: string) => Member | undefined;
   escalas: EscalaRow[];
+  onInspect: (type: "escala" | "member", id: string) => void;
 }) => {
   if (items.length === 0) {
     return (
@@ -678,33 +680,33 @@ const DetailList = ({
         if (cardId === "escalas") {
           const e = item as EscalaRow;
           return (
-            <div key={e.id} className="bg-muted/30 rounded-lg p-3">
+            <button key={e.id} onClick={() => onInspect("escala", e.id)} className="w-full text-left bg-muted/30 hover:bg-muted/60 rounded-lg p-3 transition-colors">
               <p className="text-sm font-medium text-foreground">{e.titulo}</p>
               <p className="text-xs text-muted-foreground">
                 {e.data ? format(new Date(e.data + "T00:00:00"), "dd 'de' MMM", { locale: ptBR }) : "Sem data"}
                 {e.hora ? ` · ${String(e.hora).slice(0, 5)}` : ""}
               </p>
-            </div>
+            </button>
           );
         }
         if (cardId === "musicas") {
           const m = item as MusicaRow;
           const e = escalaMap.get(m.escala_id);
           return (
-            <div key={idx} className="bg-muted/30 rounded-lg p-3">
+            <button key={idx} onClick={() => e && onInspect("escala", e.id)} className="w-full text-left bg-muted/30 hover:bg-muted/60 rounded-lg p-3 transition-colors">
               <p className="text-sm font-medium text-foreground">{m.nome}</p>
               {e && <p className="text-xs text-muted-foreground">{e.titulo}</p>}
-            </div>
+            </button>
           );
         }
         if (cardId === "membros" || cardId === "funcoes") {
           const m = item as Member;
           const initials = m.name?.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "?";
           return (
-            <div key={m.user_id} className="bg-muted/30 rounded-lg p-3 flex items-center gap-3">
+            <button key={m.user_id} onClick={() => onInspect("member", m.user_id)} className="w-full text-left bg-muted/30 hover:bg-muted/60 rounded-lg p-3 flex items-center gap-3 transition-colors">
               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-primary-foreground">{initials}</div>
               <p className="text-sm text-foreground">{m.name}</p>
-            </div>
+            </button>
           );
         }
         // total / confirmacoes / faltas
@@ -713,13 +715,13 @@ const DetailList = ({
         const e = escalaMap.get(p.escala_id);
         const initials = m?.name?.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "?";
         return (
-          <div key={idx} className="bg-muted/30 rounded-lg p-3 flex items-center gap-3">
+          <button key={idx} onClick={() => onInspect("member", p.user_id)} className="w-full text-left bg-muted/30 hover:bg-muted/60 rounded-lg p-3 flex items-center gap-3 transition-colors">
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-primary-foreground">{initials}</div>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-foreground truncate">{m?.name || "Membro"}</p>
               <p className="text-xs text-muted-foreground truncate">{e?.titulo}</p>
             </div>
-          </div>
+          </button>
         );
       })}
     </div>
@@ -727,3 +729,129 @@ const DetailList = ({
 };
 
 export default VisaoGeralContent;
+
+const InspectDialog = ({
+  inspect,
+  onClose,
+  escalas,
+  members,
+  participantes,
+  musicas,
+  congressoId,
+}: {
+  inspect: null | { type: "escala" | "member"; id: string };
+  onClose: () => void;
+  escalas: EscalaRow[];
+  members: Member[];
+  participantes: ParticipanteRow[];
+  musicas: MusicaRow[];
+  congressoId?: string;
+}) => {
+  const [funcoesNomes, setFuncoesNomes] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!inspect || inspect.type !== "member" || !congressoId) {
+      setFuncoesNomes([]);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("membro_funcoes")
+        .select("funcao_id, funcoes(nome)")
+        .eq("congresso_id", congressoId)
+        .eq("user_id", inspect.id);
+      setFuncoesNomes(((data || []) as any[]).map((r) => r.funcoes?.nome).filter(Boolean));
+    })();
+  }, [inspect, congressoId]);
+
+  if (!inspect) return null;
+
+  if (inspect.type === "escala") {
+    const e = escalas.find((x) => x.id === inspect.id);
+    const parts = participantes.filter((p) => p.escala_id === inspect.id);
+    const mus = musicas.filter((m) => m.escala_id === inspect.id);
+    return (
+      <Dialog open onOpenChange={(o) => !o && onClose()}>
+        <DialogContent className="bg-card max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">{e?.titulo || "Escala"}</DialogTitle>
+          </DialogHeader>
+          <div className="text-xs text-muted-foreground mb-3">
+            {e?.data ? format(new Date(e.data + "T00:00:00"), "dd 'de' MMM yyyy", { locale: ptBR }) : "Sem data"}
+            {e?.hora ? ` · ${String(e.hora).slice(0, 5)}` : ""}
+          </div>
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+            <div>
+              <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Participantes ({parts.length})</p>
+              {parts.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum</p> : parts.map((p) => {
+                const m = members.find((x) => x.user_id === p.user_id);
+                return (
+                  <div key={p.user_id} className="text-sm text-foreground py-1 flex items-center gap-2">
+                    <span>{m?.name || "Membro"}</span>
+                    {p.confirmado === true && <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded">confirmado</span>}
+                    {p.confirmado === false && <span className="text-[10px] bg-destructive/20 text-destructive px-2 py-0.5 rounded">falta</span>}
+                  </div>
+                );
+              })}
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Músicas ({mus.length})</p>
+              {mus.length === 0 ? <p className="text-sm text-muted-foreground">Nenhuma</p> : mus.map((m, i) => (
+                <p key={i} className="text-sm text-foreground py-1">{m.nome}</p>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  const m = members.find((x) => x.user_id === inspect.id);
+  const memberEscalas = participantes
+    .filter((p) => p.user_id === inspect.id)
+    .map((p) => ({ p, e: escalas.find((x) => x.id === p.escala_id) }))
+    .filter((x) => x.e);
+  const initials = m?.name?.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "?";
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="bg-card max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-foreground flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-xs font-bold text-primary-foreground">{initials}</div>
+            {m?.name || "Membro"}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+          <div>
+            <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Funções ({funcoesNomes.length})</p>
+            {funcoesNomes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma função atribuída.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {funcoesNomes.map((n, i) => (
+                  <span key={i} className="text-xs bg-primary/15 text-foreground px-2 py-1 rounded-full">{n}</span>
+                ))}
+              </div>
+            )}
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase text-muted-foreground mb-2">Escalas ({memberEscalas.length})</p>
+            {memberEscalas.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Sem escalas no período.</p>
+            ) : memberEscalas.map(({ p, e }) => (
+              <div key={p.escala_id} className="bg-muted/30 rounded-lg p-2 mb-2">
+                <p className="text-sm text-foreground">{e!.titulo}</p>
+                <p className="text-xs text-muted-foreground">
+                  {e!.data ? format(new Date(e!.data + "T00:00:00"), "dd 'de' MMM", { locale: ptBR }) : "Sem data"}
+                  {p.confirmado === true && " · confirmado"}
+                  {p.confirmado === false && " · falta"}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
