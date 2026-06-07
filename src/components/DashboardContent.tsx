@@ -6,6 +6,7 @@ import MensagensContent from "./MensagensContent";
 import MinisterioContent from "./MinisterioContent";
 import HomeContent from "./HomeContent";
 import VisaoGeralContent from "./VisaoGeralContent";
+import AvisosContent from "./AvisosContent";
 
 const sectionReveal = {
   initial: { opacity: 0, y: 12 },
@@ -34,7 +35,7 @@ const DashboardContent = ({ activeSection, onSectionChange }: Props) => {
       {activeSection === "mensagens" && <MensagensContent />}
       {activeSection === "ministerio" && <MinisterioContent />}
       {activeSection === "visao-geral" && onSectionChange && <VisaoGeralContent onBack={() => onSectionChange("inicio")} />}
-      {activeSection === "avisos" && <PlaceholderSection title="Avisos" description="Avisos e comunicados" />}
+      {activeSection === "avisos" && <AvisosContent />}
       {activeSection === "indisponibilidades" && <PlaceholderSection title="Indisponibilidades" description="Marque suas indisponibilidades" />}
       {activeSection === "planejamento" && <PlaceholderSection title="Planejamento de Funções" description="Planeje as funções do ministério" />}
       {activeSection === "aniversariantes" && <PlaceholderSection title="Aniversariantes" description="Aniversariantes do mês" />}
