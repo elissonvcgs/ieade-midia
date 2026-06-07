@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -120,6 +120,7 @@ const VisaoGeralContent = ({ onBack }: Props) => {
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [weekdayDialogOpen, setWeekdayDialogOpen] = useState(false);
   const [memberSearch, setMemberSearch] = useState("");
+  const [inspect, setInspect] = useState<null | { type: "escala" | "member"; id: string }>(null);
 
   useEffect(() => {
     if (!congresso) return;
@@ -481,9 +482,20 @@ const VisaoGeralContent = ({ onBack }: Props) => {
             })}
             memberById={memberById}
             escalas={filteredEscalas}
+            onInspect={(t, id) => setInspect({ type: t, id })}
           />
         </SheetContent>
       </Sheet>
+
+      <InspectDialog
+        inspect={inspect}
+        onClose={() => setInspect(null)}
+        escalas={escalas}
+        members={members}
+        participantes={participantes}
+        musicas={musicas}
+        congressoId={congresso?.id}
+      />
 
       {/* Member selection dialog */}
       <Dialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen}>
