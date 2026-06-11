@@ -23,11 +23,16 @@ const CongressoContext = createContext<CongressoContextType>({
 });
 
 export const CongressoProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [congresso, setCongresso] = useState<Congresso | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+
     if (!user) {
       setCongresso(null);
       setLoading(false);
@@ -35,23 +40,34 @@ export const CongressoProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const loadCongresso = async () => {
-      // Get first congresso the user is a member of
-      const { data: membership } = await supabase
-        .from("congresso_members")
-        .select("congresso_id, congressos(*)")
-        .eq("user_id", user.id)
-        .limit(1)
-        .maybeSingle();
+      setLoading(true);
+      try {
+        // Get first congresso the user is a member of
+        const { data: membership, error } = await supabase
+          .from("congresso_members")
+          .select("congresso_id, congressos(*)")
+          .eq("user_id", user.id)
+          .limit(1)
+          .maybeSingle();
 
-      if (membership?.congressos) {
-        const c = membership.congressos as unknown as Congresso;
-        setCongresso(c);
+        if (error) throw error;
+
+        if (membership?.congressos) {
+          const c = membership.congressos as unknown as Congresso;
+          setCongresso(c);
+        } else {
+          setCongresso(null);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar congresso", error);
+        setCongresso(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     loadCongresso();
-  }, [user]);
+  }, [user, authLoading]);
 
   return (
     <CongressoContext.Provider value={{ congresso, setCongresso, loading }}>
