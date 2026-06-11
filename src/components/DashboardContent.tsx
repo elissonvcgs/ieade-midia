@@ -7,6 +7,8 @@ import MinisterioContent from "./MinisterioContent";
 import HomeContent from "./HomeContent";
 import VisaoGeralContent from "./VisaoGeralContent";
 import AvisosContent from "./AvisosContent";
+import { Button } from "@/components/ui/button";
+import { useCongresso } from "@/hooks/useCongresso";
 
 const sectionReveal = {
   initial: { opacity: 0, y: 12 },
@@ -20,6 +22,8 @@ interface Props {
 }
 
 const DashboardContent = ({ activeSection, onSectionChange }: Props) => {
+  const { congresso, loading } = useCongresso();
+
   return (
     <div className="max-w-4xl mx-auto p-6 lg:p-10">
       {/* Header */}
@@ -28,6 +32,23 @@ const DashboardContent = ({ activeSection, onSectionChange }: Props) => {
         <h1 className="text-xl font-semibold text-primary">IEADE MÍDIA</h1>
         <div className="w-8" />
       </div>
+
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      ) : !congresso ? (
+        <motion.div {...sectionReveal} className="flex flex-col items-center justify-center py-20 text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-2">Nenhum ministério encontrado</h2>
+          <p className="text-muted-foreground max-w-md mb-6">
+            Sua conta precisa estar vinculada a um congresso/ministério para consultar avisos, escalas e membros.
+          </p>
+          <Button onClick={() => onSectionChange?.("configuracoes")} variant="outline">
+            Ir para configurações
+          </Button>
+        </motion.div>
+      ) : (
+        <>
 
       {activeSection === "inicio" && onSectionChange && <HomeContent onSectionChange={onSectionChange} />}
       {activeSection === "escalas" && <EscalasContent />}
@@ -40,6 +61,8 @@ const DashboardContent = ({ activeSection, onSectionChange }: Props) => {
       {activeSection === "planejamento" && <PlaceholderSection title="Planejamento de Funções" description="Planeje as funções do ministério" />}
       {activeSection === "aniversariantes" && <PlaceholderSection title="Aniversariantes" description="Aniversariantes do mês" />}
       {activeSection === "configuracoes" && <ConfiguracoesContent />}
+        </>
+      )}
     </div>
   );
 };
