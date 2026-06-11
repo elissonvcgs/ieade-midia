@@ -644,6 +644,7 @@ export type Database = {
         Args: { _congresso_id: string; _user_id: string }
         Returns: boolean
       }
+      shares_congresso: { Args: { _a: string; _b: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
