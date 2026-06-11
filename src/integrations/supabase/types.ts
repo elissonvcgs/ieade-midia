@@ -22,6 +22,7 @@ export type Database = {
           created_by: string
           destaque: boolean
           id: string
+          image_url: string | null
           titulo: string
           updated_at: string
         }
@@ -32,6 +33,7 @@ export type Database = {
           created_by: string
           destaque?: boolean
           id?: string
+          image_url?: string | null
           titulo: string
           updated_at?: string
         }
@@ -42,6 +44,7 @@ export type Database = {
           created_by?: string
           destaque?: boolean
           id?: string
+          image_url?: string | null
           titulo?: string
           updated_at?: string
         }
