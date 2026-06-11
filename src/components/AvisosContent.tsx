@@ -57,6 +57,17 @@ const AvisosContent = () => {
       const map = new Map((profs || []).map((p: any) => [p.user_id, p.name]));
       list.forEach((a) => (a.author_name = map.get(a.created_by) || "Autor"));
     }
+    // Generate signed URLs for images (private bucket)
+    await Promise.all(
+      list.map(async (a) => {
+        if (a.image_url && !a.image_url.startsWith("http")) {
+          const { data: signed } = await supabase.storage
+            .from("aviso-images")
+            .createSignedUrl(a.image_url, 60 * 60);
+          if (signed?.signedUrl) a.image_url = signed.signedUrl;
+        }
+      })
+    );
     setAvisos(list);
     setLoading(false);
   };
@@ -110,8 +121,7 @@ const AvisosContent = () => {
         setSubmitting(false);
         return;
       }
-      const { data: pub } = supabase.storage.from("aviso-images").getPublicUrl(path);
-      image_url = pub.publicUrl;
+      image_url = path;
     }
     const { error } = await supabase.from("avisos").insert({
       congresso_id: congresso.id,
